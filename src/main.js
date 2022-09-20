@@ -12,6 +12,7 @@ class ScreenSaver3DText {
 	constructor(userOptions) {
 		this.lastTime = 0;
 		this.direction = -1;
+		this.turning = false;
 
 		const options = {
 			...defaultOptions,
@@ -129,18 +130,26 @@ class ScreenSaver3DText {
 			return;
 		}
 
-		this.textMesh.rotation.y += delta;
-		this.textMesh.position.x += delta * 20 * this.direction;
-
 		this.boxHelper.setFromObject(this.textMesh);
 		this.boundingBox.setFromObject(this.textMesh);
 
+		const frontPoint = new THREE.Vector3().copy(this.boundingBox.min);
+		frontPoint.z = this.boundingBox.max.z;
+
 		if (
-			!this.frustum.containsPoint(this.boundingBox.min) ||
+			!this.frustum.containsPoint(frontPoint) ||
 			!this.frustum.containsPoint(this.boundingBox.max)
 		) {
-			this.direction *= -1;
+			if (!this.turning) {
+				this.direction *= -1;
+				this.turning = true;
+			}
+		} else {
+			this.turning = false;
 		}
+
+		this.textMesh.rotation.y += delta;
+		this.textMesh.position.x += delta * 20 * this.direction;
 	}
 
 	render(time) {
