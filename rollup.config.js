@@ -1,4 +1,4 @@
-import resolve from "rollup-plugin-node-resolve";
+import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 
 export default {
@@ -12,8 +12,6 @@ export default {
 	plugins: [
 		typescript(),
 		resolve({
-			jsnext: true,
-			main: true,
 			browser: true,
 		}),
 	],

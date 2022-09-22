@@ -2,10 +2,12 @@ import * as THREE from "three";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { random } from "./utils";
 
 interface Options {
 	text?: string;
 	font?: string;
+	debug?: boolean;
 }
 
 const defaultOptions: Options = {
@@ -27,8 +29,8 @@ export default class ScreenSaver3DText {
 
 	constructor(userOptions: Options) {
 		this.direction = new THREE.Vector3(
-			Math.random() * -1,
-			Math.random() * -1,
+			random(-1, 1),
+			random(-1, 1),
 			0
 		).normalize();
 
@@ -104,7 +106,9 @@ export default class ScreenSaver3DText {
 			this.scene.add(this.textMesh);
 
 			this.boxHelper = new THREE.BoxHelper(this.textMesh, 0xffffff);
-			// this.scene.add(this.boxHelper);
+			if (options.debug) {
+				this.scene.add(this.boxHelper);
+			}
 
 			this.boundingBox = new THREE.Box3();
 			this.boundingBox.setFromObject(this.textMesh);
@@ -115,9 +119,11 @@ export default class ScreenSaver3DText {
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
 		container.appendChild(this.renderer.domElement);
 
-		const controls = new OrbitControls(this.camera, this.renderer.domElement);
-		controls.target.set(0, 0, 0);
-		controls.update();
+		if (options.debug) {
+			const controls = new OrbitControls(this.camera, this.renderer.domElement);
+			controls.target.set(0, 0, 0);
+			controls.update();
+		}
 
 		window.addEventListener("resize", () => {
 			this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -129,7 +135,17 @@ export default class ScreenSaver3DText {
 		requestAnimationFrame(this.render.bind(this));
 	}
 
-	getScreenCoordinates() {}
+	getScreenCoordinates(worldCoords: THREE.Vector3) {
+		const widthHalf = window.innerWidth / 2;
+		const heightHalf = window.innerHeight / 2;
+
+		const result = worldCoords.clone();
+		result.project(this.camera);
+		result.x = result.x * widthHalf + widthHalf;
+		result.y = -(result.y * heightHalf) + heightHalf;
+
+		return result;
+	}
 
 	animate(delta: number) {
 		if (!this.textMesh || !this.boxHelper || !this.boundingBox) {
@@ -142,24 +158,23 @@ export default class ScreenSaver3DText {
 		const frontPoint = new THREE.Vector3().copy(this.boundingBox.min);
 		frontPoint.z = this.boundingBox.max.z;
 
-		const width = window.innerWidth;
-		const height = window.innerHeight;
-		const widthHalf = width / 2;
-		const heightHalf = height / 2;
+		const leftTopCornerPos = this.getScreenCoordinates(frontPoint);
+		const rightBottomCornerPos = this.getScreenCoordinates(
+			this.boundingBox.max
+		);
+		const centerPos = this.getScreenCoordinates(
+			this.boundingBox.getCenter(new THREE.Vector3())
+		);
 
-		const point1ScreenPos = frontPoint.clone();
-		point1ScreenPos.project(this.camera);
-		point1ScreenPos.x = point1ScreenPos.x * widthHalf + widthHalf;
-		point1ScreenPos.y = -(point1ScreenPos.y * heightHalf) + heightHalf;
-
-		const point2ScreenPos = this.boundingBox.max.clone();
-		point2ScreenPos.project(this.camera);
-		point2ScreenPos.x = point2ScreenPos.x * widthHalf + widthHalf;
-		point2ScreenPos.y = -(point2ScreenPos.y * heightHalf) + heightHalf;
-
-		const widthExceeded = point1ScreenPos.x <= 0 || point2ScreenPos.x >= width;
+		const widthExceeded =
+			leftTopCornerPos.x <= 0 || rightBottomCornerPos.x >= window.innerWidth;
 		const heightExceeded =
-			point2ScreenPos.y <= 0 || point1ScreenPos.y >= height;
+			rightBottomCornerPos.y <= 0 || leftTopCornerPos.y >= window.innerHeight;
+
+		const centerExceededWidth =
+			centerPos.x <= 0 || centerPos.x >= window.innerWidth;
+		const centerExceededHeight =
+			centerPos.y <= 0 || centerPos.y >= window.innerHeight;
 
 		if (widthExceeded || heightExceeded) {
 			if (!this.changingDirection) {
@@ -171,6 +186,15 @@ export default class ScreenSaver3DText {
 			}
 		} else {
 			this.changingDirection = false;
+		}
+
+		// in case we hit a corner and the above condition let the text go outside bounds,
+		// we take care of the direction
+		if (centerExceededWidth || centerExceededHeight) {
+			const edgeNormal = centerExceededWidth
+				? new THREE.Vector3(1, 0, 0)
+				: new THREE.Vector3(0, 1, 0);
+			this.direction.copy(this.direction.reflect(edgeNormal));
 		}
 
 		this.textMesh.rotation.y += delta;

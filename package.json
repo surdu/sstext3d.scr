@@ -14,13 +14,13 @@
 		"three": "^0.144.0"
 	},
 	"devDependencies": {
+		"@rollup/plugin-node-resolve": "^14.1.0",
 		"@rollup/plugin-typescript": "^8.5.0",
 		"@types/three": "^0.144.0",
 		"babel-plugin-external-helpers": "^6.22.0",
 		"babel-preset-es2015": "^6.24.1",
 		"concurrently": "^7.4.0",
 		"http-server": "^14.1.1",
-		"rollup": "^2.79.0",
-		"rollup-plugin-node-resolve": "^5.2.0"
+		"rollup": "^2.79.0"
 	}
 }
