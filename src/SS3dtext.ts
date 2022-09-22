@@ -3,20 +3,34 @@ import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-const defaultOptions = {
+interface Options {
+	text?: string;
+	font?: string;
+}
+
+const defaultOptions: Options = {
 	text: "OpenGL",
 	font: "helvetiker_regular",
 };
 
 export default class ScreenSaver3DText {
-	constructor(userOptions) {
-		this.lastTime = 0;
+	lastTime = 0;
+	direction: THREE.Vector3;
+	changingDirection = false;
+	camera: THREE.PerspectiveCamera;
+	scene: THREE.Scene;
+	textMesh?: THREE.Mesh;
+	boundingBox?: THREE.Box3;
+	renderer: THREE.WebGLRenderer;
+
+	boxHelper?: THREE.BoxHelper;
+
+	constructor(userOptions: Options) {
 		this.direction = new THREE.Vector3(
 			Math.random() * -1,
 			Math.random() * -1,
 			0
-		);
-		this.changingDirection = false;
+		).normalize();
 
 		const options = {
 			...defaultOptions,
@@ -38,14 +52,6 @@ export default class ScreenSaver3DText {
 		this.camera.lookAt(cameraTarget);
 		this.camera.updateMatrix();
 		this.camera.updateMatrixWorld();
-
-		this.frustum = new THREE.Frustum();
-		this.frustum.setFromProjectionMatrix(
-			new THREE.Matrix4().multiplyMatrices(
-				this.camera.projectionMatrix,
-				this.camera.matrixWorldInverse
-			)
-		);
 
 		this.scene = new THREE.Scene();
 		this.scene.background = new THREE.Color(0x000000);
@@ -70,7 +76,7 @@ export default class ScreenSaver3DText {
 
 		const loader = new FontLoader();
 		loader.load(`fonts/${options.font}.typeface.json`, (font) => {
-			const textGeo = new TextGeometry(options.text, {
+			const textGeo = new TextGeometry(options.text!, {
 				font: font,
 				size: 10,
 				height: 10,
@@ -78,9 +84,10 @@ export default class ScreenSaver3DText {
 
 			// center the rotation point in the center of the geometry
 			textGeo.computeBoundingBox();
-			const textWidth = textGeo.boundingBox.max.x - textGeo.boundingBox.min.x;
-			const textHeight = textGeo.boundingBox.max.y - textGeo.boundingBox.min.y;
-			const textDepth = textGeo.boundingBox.max.z - textGeo.boundingBox.min.z;
+			const textWidth = textGeo.boundingBox!.max.x - textGeo.boundingBox!.min.x;
+			const textHeight =
+				textGeo.boundingBox!.max.y - textGeo.boundingBox!.min.y;
+			const textDepth = textGeo.boundingBox!.max.z - textGeo.boundingBox!.min.z;
 			textGeo.translate(textWidth / -2, textHeight / -2, textDepth / -2);
 
 			this.textMesh = new THREE.Mesh(
@@ -116,26 +123,21 @@ export default class ScreenSaver3DText {
 			this.camera.aspect = window.innerWidth / window.innerHeight;
 			this.camera.updateProjectionMatrix();
 
-			this.frustum.setFromProjectionMatrix(
-				new THREE.Matrix4().multiplyMatrices(
-					this.camera.projectionMatrix,
-					this.camera.matrixWorldInverse
-				)
-			);
-
 			this.renderer.setSize(window.innerWidth, window.innerHeight);
 		});
 
 		requestAnimationFrame(this.render.bind(this));
 	}
 
-	animate(delta) {
-		if (!this.textMesh) {
+	getScreenCoordinates() {}
+
+	animate(delta: number) {
+		if (!this.textMesh || !this.boxHelper || !this.boundingBox) {
 			return;
 		}
 
-		this.boxHelper.setFromObject(this.textMesh);
-		this.boundingBox.setFromObject(this.textMesh);
+		this.boxHelper?.setFromObject(this.textMesh);
+		this.boundingBox?.setFromObject(this.textMesh);
 
 		const frontPoint = new THREE.Vector3().copy(this.boundingBox.min);
 		frontPoint.z = this.boundingBox.max.z;
@@ -157,7 +159,7 @@ export default class ScreenSaver3DText {
 
 		const widthExceeded = point1ScreenPos.x <= 0 || point2ScreenPos.x >= width;
 		const heightExceeded =
-			point1ScreenPos.y <= 0 || point2ScreenPos.y >= height;
+			point2ScreenPos.y <= 0 || point1ScreenPos.y >= height;
 
 		if (widthExceeded || heightExceeded) {
 			if (!this.changingDirection) {
@@ -175,7 +177,7 @@ export default class ScreenSaver3DText {
 		this.textMesh.position.add(this.direction);
 	}
 
-	render(time) {
+	render(time: number) {
 		time *= 0.001;
 		const delta = this.lastTime - time;
 		this.lastTime = time;

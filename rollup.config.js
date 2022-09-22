@@ -1,9 +1,8 @@
-import { babel } from "@rollup/plugin-babel";
 import resolve from "rollup-plugin-node-resolve";
-import commonjs from "rollup-plugin-commonjs";
+import typescript from "@rollup/plugin-typescript";
 
 export default {
-	input: "src/main.js",
+	input: "src/main.ts",
 	output: {
 		file: "build/main.min.js",
 		format: "iife",
@@ -11,12 +10,11 @@ export default {
 	},
 
 	plugins: [
+		typescript(),
 		resolve({
 			jsnext: true,
 			main: true,
 			browser: true,
 		}),
-		commonjs(),
-		babel({ babelHelpers: "bundled" }),
 	],
 };
