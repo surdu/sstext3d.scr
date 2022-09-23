@@ -1,12 +1,21 @@
 import * as THREE from "three";
+import * as TWEEN from "@tweenjs/tween.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { random } from "./utils";
 
+enum Animation {
+	SPIN = "spin",
+	SEESAW = "seesaw",
+	WOOBLE = "wooble",
+	TUMBLE = "tumble",
+}
+
 interface Options {
 	text?: string;
 	font?: string;
+	animation?: Animation;
 	debug?: boolean;
 }
 
@@ -17,6 +26,7 @@ const defaultOptions: Options = {
 
 export default class ScreenSaver3DText {
 	lastTime = 0;
+	speed = 1;
 	direction: THREE.Vector3;
 	changingDirection = false;
 	camera: THREE.PerspectiveCamera;
@@ -24,15 +34,15 @@ export default class ScreenSaver3DText {
 	textMesh?: THREE.Mesh;
 	boundingBox?: THREE.Box3;
 	renderer: THREE.WebGLRenderer;
+	animation?: Animation = Animation.SPIN;
+	tween?: TWEEN.Tween<any>;
 
 	boxHelper?: THREE.BoxHelper;
 
 	constructor(userOptions: Options) {
-		this.direction = new THREE.Vector3(
-			random(-1, 1),
-			random(-1, 1),
-			0
-		).normalize();
+		this.direction = new THREE.Vector3(random(-1, 1), random(-1, 1), 0)
+			.normalize()
+			.multiplyScalar(this.speed);
 
 		const options = {
 			...defaultOptions,
@@ -147,6 +157,14 @@ export default class ScreenSaver3DText {
 		return result;
 	}
 
+	spinAnimation(delta: number) {
+		if (!this.textMesh) {
+			return;
+		}
+
+		this.textMesh.rotation.y += delta;
+	}
+
 	animate(delta: number) {
 		if (!this.textMesh || !this.boxHelper || !this.boundingBox) {
 			return;
@@ -197,8 +215,12 @@ export default class ScreenSaver3DText {
 			this.direction.copy(this.direction.reflect(edgeNormal));
 		}
 
-		this.textMesh.rotation.y += delta;
 		this.textMesh.position.add(this.direction);
+
+		switch (this.animation) {
+			case Animation.SPIN:
+				this.spinAnimation(delta);
+		}
 	}
 
 	render(time: number) {
