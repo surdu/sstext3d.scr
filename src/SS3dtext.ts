@@ -3,12 +3,12 @@ import * as TWEEN from "@tweenjs/tween.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { random } from "./utils";
+import { degreesToRadians, random } from "./utils";
 
 enum Animation {
 	SPIN = "spin",
 	SEESAW = "seesaw",
-	WOOBLE = "wooble",
+	WOBBLE = "wobble",
 	TUMBLE = "tumble",
 }
 
@@ -26,7 +26,7 @@ const defaultOptions: Options = {
 
 export default class ScreenSaver3DText {
 	lastTime = 0;
-	speed = 1;
+	speed = 0.5;
 	direction: THREE.Vector3;
 	changingDirection = false;
 	camera: THREE.PerspectiveCamera;
@@ -34,7 +34,7 @@ export default class ScreenSaver3DText {
 	textMesh?: THREE.Mesh;
 	boundingBox?: THREE.Box3;
 	renderer: THREE.WebGLRenderer;
-	animation?: Animation = Animation.SPIN;
+	animation?: Animation = Animation.SEESAW;
 	tween?: TWEEN.Tween<any>;
 
 	boxHelper?: THREE.BoxHelper;
@@ -157,12 +157,91 @@ export default class ScreenSaver3DText {
 		return result;
 	}
 
-	spinAnimation(delta: number) {
-		if (!this.textMesh) {
+	spinAnimation() {
+		if (this.tween) {
 			return;
 		}
 
-		this.textMesh.rotation.y += delta;
+		this.tween = new TWEEN.Tween({ y: 0 })
+			.to({ y: degreesToRadians(360) }, 7500)
+			.onUpdate((rotation) => {
+				if (!this.textMesh) {
+					return;
+				}
+
+				this.textMesh.rotation.y = rotation.y;
+			})
+			.repeat(Infinity)
+			.start();
+	}
+
+	seesawAnimation() {
+		if (this.tween) {
+			return;
+		}
+
+		this.tween = new TWEEN.Tween({ y: degreesToRadians(45) })
+			.to({ y: degreesToRadians(-45) }, 3000)
+			.easing(TWEEN.Easing.Cubic.InOut)
+			.onUpdate((rotation) => {
+				if (!this.textMesh) {
+					return;
+				}
+
+				this.textMesh.rotation.y = rotation.y;
+			})
+			.repeat(Infinity)
+			.yoyo(true)
+			.start();
+	}
+
+	wobbleAnimation() {
+		if (this.tween) {
+			return;
+		}
+
+		this.tween = new TWEEN.Tween({
+			y: degreesToRadians(45),
+		})
+			.to({ y: degreesToRadians(-45) }, 3000)
+			.easing(TWEEN.Easing.Cubic.InOut)
+			.onStart(() => {
+				new TWEEN.Tween({ z: degreesToRadians(45) })
+					.to({ z: degreesToRadians(-45) }, 6000)
+					.onUpdate((rotation) => {
+						if (!this.textMesh) {
+							return;
+						}
+
+						this.textMesh.rotation.z = rotation.z;
+					})
+					.repeat(Infinity)
+					.yoyo(true)
+					.start();
+
+				new TWEEN.Tween({ x: degreesToRadians(20) })
+					.to({ x: degreesToRadians(-20) }, 3000)
+					.onUpdate((rotation) => {
+						if (!this.textMesh) {
+							return;
+						}
+
+						this.textMesh.rotation.x = rotation.x;
+					})
+					.repeat(Infinity)
+					.yoyo(true)
+					.start();
+			})
+			.onUpdate((rotation) => {
+				if (!this.textMesh) {
+					return;
+				}
+
+				this.textMesh.rotation.y = rotation.y;
+			})
+			.repeat(Infinity)
+			.yoyo(true)
+			.start();
 	}
 
 	animate(delta: number) {
@@ -219,8 +298,17 @@ export default class ScreenSaver3DText {
 
 		switch (this.animation) {
 			case Animation.SPIN:
-				this.spinAnimation(delta);
+				this.spinAnimation();
+				break;
+			case Animation.SEESAW:
+				this.seesawAnimation();
+				break;
+			case Animation.WOBBLE:
+				this.wobbleAnimation();
+				break;
 		}
+
+		TWEEN.update();
 	}
 
 	render(time: number) {

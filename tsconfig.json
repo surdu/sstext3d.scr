@@ -4,7 +4,8 @@
 		"noImplicitAny": true,
 		"removeComments": true,
 		"sourceMap": true,
-		"strict": true
+		"strict": true,
+		"moduleResolution": "node"
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules"]
