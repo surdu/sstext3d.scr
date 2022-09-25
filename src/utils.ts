@@ -5,3 +5,10 @@ export function random(min: number, max: number) {
 export function degreesToRadians(degrees: number) {
 	return (degrees * Math.PI) / 180;
 }
+
+export function timeText() {
+	const date = new Date();
+	return new Intl.DateTimeFormat("default", { timeStyle: "medium" }).format(
+		date
+	);
+}

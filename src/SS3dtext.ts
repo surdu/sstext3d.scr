@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import * as TWEEN from "@tweenjs/tween.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
-import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
+import { FontLoader, Font } from "three/examples/jsm/loaders/FontLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { degreesToRadians, random } from "./utils";
 
@@ -13,39 +13,47 @@ enum Animation {
 }
 
 interface Options {
-	text?: string;
-	font?: string;
-	animation?: Animation;
+	text: string | (() => string);
+	font: string;
+	animation: Animation;
 	debug?: boolean;
 }
 
 const defaultOptions: Options = {
 	text: "OpenGL",
 	font: "helvetiker_regular",
+	animation: Animation.SPIN,
 };
 
 export default class ScreenSaver3DText {
-	speed = 0.5;
+	text: string;
+	speed = 1;
 	direction: THREE.Vector3;
 	changingDirection = false;
 	camera: THREE.PerspectiveCamera;
 	scene: THREE.Scene;
 	textMesh?: THREE.Mesh;
+	textGroup: THREE.Group;
 	boundingBox?: THREE.Box3;
 	renderer: THREE.WebGLRenderer;
-	animation?: Animation = Animation.TUMBLE;
+	animation?: Animation = Animation.SEESAW;
+	options: Options;
+	envMap: THREE.CubeTexture;
+	font?: Font;
 
 	boxHelper?: THREE.BoxHelper;
 
-	constructor(userOptions: Options) {
-		this.direction = new THREE.Vector3(random(-1, 1), random(-1, 1), 0)
-			.normalize()
-			.multiplyScalar(this.speed);
-
-		const options = {
+	constructor(userOptions: Partial<Options>) {
+		this.options = {
 			...defaultOptions,
 			...userOptions,
 		};
+
+		this.text = this.getText();
+
+		this.direction = new THREE.Vector3(random(-1, 1), random(-1, 1), 0)
+			.normalize()
+			.multiplyScalar(this.speed);
 
 		const container = document.createElement("div");
 		document.body.appendChild(container);
@@ -57,7 +65,7 @@ export default class ScreenSaver3DText {
 			1500
 		);
 
-		this.camera.position.set(0, 0, 100);
+		this.camera.position.set(0, 0, 200);
 		const cameraTarget = new THREE.Vector3(0, 0, 0);
 		this.camera.lookAt(cameraTarget);
 		this.camera.updateMatrix();
@@ -72,7 +80,7 @@ export default class ScreenSaver3DText {
 
 		const textureLoader = new THREE.CubeTextureLoader();
 		textureLoader.setPath("textures/");
-		const textureCube = textureLoader.load([
+		this.envMap = textureLoader.load([
 			"posx.png",
 			"negx.png",
 			"posy.png",
@@ -80,46 +88,18 @@ export default class ScreenSaver3DText {
 			"posz.png",
 			"negz.png",
 		]);
-		textureCube.encoding = THREE.sRGBEncoding;
+		this.envMap.encoding = THREE.sRGBEncoding;
 
 		// this.scene.background = textureCube;
 
+		this.textGroup = new THREE.Group();
+		this.textGroup.position.set(0, 0, 0);
+		this.scene.add(this.textGroup);
+
 		const loader = new FontLoader();
-		loader.load(`fonts/${options.font}.typeface.json`, (font) => {
-			const textGeo = new TextGeometry(options.text!, {
-				font: font,
-				size: 10,
-				height: 10,
-			});
-
-			// center the rotation point in the center of the geometry
-			textGeo.computeBoundingBox();
-			const textWidth = textGeo.boundingBox!.max.x - textGeo.boundingBox!.min.x;
-			const textHeight =
-				textGeo.boundingBox!.max.y - textGeo.boundingBox!.min.y;
-			const textDepth = textGeo.boundingBox!.max.z - textGeo.boundingBox!.min.z;
-			textGeo.translate(textWidth / -2, textHeight / -2, textDepth / -2);
-
-			this.textMesh = new THREE.Mesh(
-				textGeo,
-				new THREE.MeshPhysicalMaterial({
-					envMap: textureCube,
-					metalness: 0.7,
-					roughness: 0,
-					color: new THREE.Color(0xffffff),
-				})
-			);
-
-			this.textMesh.position.set(0, 0, 0);
-			this.scene.add(this.textMesh);
-
-			this.boxHelper = new THREE.BoxHelper(this.textMesh, 0xffffff);
-			if (options.debug) {
-				this.scene.add(this.boxHelper);
-			}
-
-			this.boundingBox = new THREE.Box3();
-			this.boundingBox.setFromObject(this.textMesh);
+		loader.load(`fonts/${this.options.font}.typeface.json`, (font) => {
+			this.font = font;
+			this.createTextMesh();
 		});
 
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -127,7 +107,7 @@ export default class ScreenSaver3DText {
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
 		container.appendChild(this.renderer.domElement);
 
-		if (options.debug) {
+		if (this.options.debug) {
 			const controls = new OrbitControls(this.camera, this.renderer.domElement);
 			controls.target.set(0, 0, 0);
 			controls.update();
@@ -158,6 +138,61 @@ export default class ScreenSaver3DText {
 		requestAnimationFrame(this.render.bind(this));
 	}
 
+	createTextMesh() {
+		const textGeo = new TextGeometry(this.text, {
+			font: this.font!,
+			size: 20,
+			height: 20,
+		});
+
+		// center the rotation point in the center of the geometry
+		textGeo.computeBoundingBox();
+		const textWidth = textGeo.boundingBox!.max.x - textGeo.boundingBox!.min.x;
+		const textHeight = textGeo.boundingBox!.max.y - textGeo.boundingBox!.min.y;
+		const textDepth = textGeo.boundingBox!.max.z - textGeo.boundingBox!.min.z;
+		textGeo.translate(textWidth / -2, textHeight / -2, textDepth / -2);
+
+		this.textMesh = new THREE.Mesh(
+			textGeo,
+			new THREE.MeshPhysicalMaterial({
+				envMap: this.envMap,
+				metalness: 0.7,
+				roughness: 0,
+				color: new THREE.Color(0xffffff),
+			})
+		);
+
+		this.textGroup.add(this.textMesh);
+
+		this.boxHelper = new THREE.BoxHelper(this.textGroup, 0xffffff);
+		if (this.options.debug) {
+			this.scene.add(this.boxHelper);
+		}
+
+		this.boundingBox = new THREE.Box3();
+		this.boundingBox.setFromObject(this.textGroup);
+	}
+
+	getText() {
+		let text: string | undefined;
+
+		if (typeof this.options.text === "string") {
+			text = this.options.text;
+		} else if (typeof this.options.text === "function") {
+			text = this.options.text();
+		}
+
+		if (!text) {
+			throw new Error("Text can;t be empty");
+		}
+
+		if (text.length > 20) {
+			throw new Error("Text must be under 20 characters");
+		}
+
+		return text;
+	}
+
 	getScreenCoordinates(worldCoords: THREE.Vector3) {
 		const widthHalf = window.innerWidth / 2;
 		const heightHalf = window.innerHeight / 2;
@@ -171,12 +206,12 @@ export default class ScreenSaver3DText {
 	}
 
 	moveAnimation() {
-		if (!this.textMesh || !this.boxHelper || !this.boundingBox) {
+		if (!this.boxHelper || !this.boundingBox) {
 			return;
 		}
 
-		this.boxHelper?.setFromObject(this.textMesh);
-		this.boundingBox?.setFromObject(this.textMesh);
+		this.boxHelper?.setFromObject(this.textGroup);
+		this.boundingBox?.setFromObject(this.textGroup);
 
 		const frontPoint = new THREE.Vector3().copy(this.boundingBox.min);
 		frontPoint.z = this.boundingBox.max.z;
@@ -220,18 +255,14 @@ export default class ScreenSaver3DText {
 			this.direction.copy(this.direction.reflect(edgeNormal));
 		}
 
-		this.textMesh.position.add(this.direction);
+		this.textGroup.position.add(this.direction);
 	}
 
 	spinAnimation() {
 		new TWEEN.Tween({ y: 0 })
 			.to({ y: degreesToRadians(360) }, 7500)
 			.onUpdate((rotation) => {
-				if (!this.textMesh) {
-					return;
-				}
-
-				this.textMesh.rotation.y = rotation.y;
+				this.textGroup.rotation.y = rotation.y;
 			})
 			.repeat(Infinity)
 			.start();
@@ -242,11 +273,7 @@ export default class ScreenSaver3DText {
 			.to({ y: degreesToRadians(-45) }, 3000)
 			.easing(TWEEN.Easing.Sinusoidal.InOut)
 			.onUpdate((rotation) => {
-				if (!this.textMesh) {
-					return;
-				}
-
-				this.textMesh.rotation.y = rotation.y;
+				this.textGroup.rotation.y = rotation.y;
 			})
 			.repeat(Infinity)
 			.yoyo(true)
@@ -266,22 +293,14 @@ export default class ScreenSaver3DText {
 					.to({ z: degreesToRadians(30) }, animationDuration * 1.2)
 					.easing(TWEEN.Easing.Sinusoidal.InOut)
 					.onUpdate((rotation) => {
-						if (!this.textMesh) {
-							return;
-						}
-
-						this.textMesh.rotation.z = rotation.z;
+						this.textGroup.rotation.z = rotation.z;
 					})
 					.repeat(Infinity)
 					.yoyo(true)
 					.start();
 			})
 			.onUpdate((rotation) => {
-				if (!this.textMesh) {
-					return;
-				}
-
-				this.textMesh.rotation.y = rotation.y;
+				this.textGroup.rotation.y = rotation.y;
 			})
 			.repeat(Infinity)
 			.yoyo(true)
@@ -299,11 +318,7 @@ export default class ScreenSaver3DText {
 				new TWEEN.Tween({ x: 0 })
 					.to({ x: degreesToRadians(360) }, animationDuration * 1.2)
 					.onUpdate((rotation) => {
-						if (!this.textMesh) {
-							return;
-						}
-
-						this.textMesh.rotation.x = rotation.x;
+						this.textGroup.rotation.x = rotation.x;
 					})
 					.repeat(Infinity)
 					.start();
@@ -311,21 +326,13 @@ export default class ScreenSaver3DText {
 				new TWEEN.Tween({ z: 0 })
 					.to({ z: degreesToRadians(360) }, animationDuration * 1.5)
 					.onUpdate((rotation) => {
-						if (!this.textMesh) {
-							return;
-						}
-
-						this.textMesh.rotation.z = rotation.z;
+						this.textGroup.rotation.z = rotation.z;
 					})
 					.repeat(Infinity)
 					.start();
 			})
 			.onUpdate((rotation) => {
-				if (!this.textMesh) {
-					return;
-				}
-
-				this.textMesh.rotation.y = rotation.y;
+				this.textGroup.rotation.y = rotation.y;
 			})
 			.repeat(Infinity)
 			.yoyo(true)
@@ -335,6 +342,13 @@ export default class ScreenSaver3DText {
 	animate() {
 		this.moveAnimation();
 		TWEEN.update();
+
+		const newText = this.getText();
+		if (newText !== this.text) {
+			this.text = newText;
+			this.textGroup.remove(this.textMesh!);
+			this.createTextMesh();
+		}
 	}
 
 	render() {
