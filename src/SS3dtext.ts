@@ -36,10 +36,11 @@ export default class ScreenSaver3DText {
 	textGroup: THREE.Group;
 	boundingBox?: THREE.Box3;
 	renderer: THREE.WebGLRenderer;
-	animation?: Animation = Animation.SEESAW;
+	animation?: Animation = Animation.WOBBLE;
 	options: Options;
 	envMap: THREE.CubeTexture;
 	font?: Font;
+	textMaterial: THREE.MeshPhysicalMaterial;
 
 	boxHelper?: THREE.BoxHelper;
 
@@ -90,6 +91,13 @@ export default class ScreenSaver3DText {
 		]);
 		this.envMap.encoding = THREE.sRGBEncoding;
 
+		this.textMaterial = new THREE.MeshPhysicalMaterial({
+			envMap: this.envMap,
+			metalness: 0.7,
+			roughness: 0,
+			color: new THREE.Color(0xffffff),
+		});
+
 		// this.scene.background = textureCube;
 
 		this.textGroup = new THREE.Group();
@@ -100,6 +108,11 @@ export default class ScreenSaver3DText {
 		loader.load(`fonts/${this.options.font}.typeface.json`, (font) => {
 			this.font = font;
 			this.createTextMesh();
+
+			this.boxHelper = new THREE.BoxHelper(this.textGroup, 0xffffff);
+			if (this.options.debug) {
+				this.scene.add(this.boxHelper);
+			}
 		});
 
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -152,22 +165,9 @@ export default class ScreenSaver3DText {
 		const textDepth = textGeo.boundingBox!.max.z - textGeo.boundingBox!.min.z;
 		textGeo.translate(textWidth / -2, textHeight / -2, textDepth / -2);
 
-		this.textMesh = new THREE.Mesh(
-			textGeo,
-			new THREE.MeshPhysicalMaterial({
-				envMap: this.envMap,
-				metalness: 0.7,
-				roughness: 0,
-				color: new THREE.Color(0xffffff),
-			})
-		);
+		this.textMesh = new THREE.Mesh(textGeo, this.textMaterial);
 
 		this.textGroup.add(this.textMesh);
-
-		this.boxHelper = new THREE.BoxHelper(this.textGroup, 0xffffff);
-		if (this.options.debug) {
-			this.scene.add(this.boxHelper);
-		}
 
 		this.boundingBox = new THREE.Box3();
 		this.boundingBox.setFromObject(this.textGroup);
@@ -287,18 +287,22 @@ export default class ScreenSaver3DText {
 			y: degreesToRadians(45),
 		})
 			.to({ y: degreesToRadians(-45) }, animationDuration)
-			.easing(TWEEN.Easing.Sinusoidal.InOut)
-			.onStart(() => {
-				new TWEEN.Tween({ z: degreesToRadians(-30) })
-					.to({ z: degreesToRadians(30) }, animationDuration * 1.2)
-					.easing(TWEEN.Easing.Sinusoidal.InOut)
+			.easing((amount) => {
+				return amount * (2 - amount);
+			})
+			.chain(
+				new TWEEN.Tween({ z: degreesToRadians(30) })
+					.to({ z: degreesToRadians(-30) }, animationDuration)
+					.easing((amount) => {
+						return amount * amount;
+					})
 					.onUpdate((rotation) => {
 						this.textGroup.rotation.z = rotation.z;
 					})
 					.repeat(Infinity)
 					.yoyo(true)
-					.start();
-			})
+					.start()
+			)
 			.onUpdate((rotation) => {
 				this.textGroup.rotation.y = rotation.y;
 			})
