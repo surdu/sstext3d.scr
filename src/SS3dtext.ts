@@ -5,7 +5,7 @@ import { FontLoader, Font } from "three/examples/jsm/loaders/FontLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { degreesToRadians, random } from "./utils";
 
-enum Animation {
+export enum Animation {
 	SPIN = "spin",
 	SEESAW = "seesaw",
 	WOBBLE = "wobble",
@@ -36,7 +36,6 @@ export default class ScreenSaver3DText {
 	textGroup: THREE.Group;
 	boundingBox?: THREE.Box3;
 	renderer: THREE.WebGLRenderer;
-	animation?: Animation = Animation.WOBBLE;
 	options: Options;
 	envMap: THREE.CubeTexture;
 	font?: Font;
@@ -44,7 +43,7 @@ export default class ScreenSaver3DText {
 
 	boxHelper?: THREE.BoxHelper;
 
-	constructor(userOptions: Partial<Options>) {
+	constructor(userOptions?: Partial<Options>) {
 		this.options = {
 			...defaultOptions,
 			...userOptions,
@@ -133,7 +132,7 @@ export default class ScreenSaver3DText {
 			this.renderer.setSize(window.innerWidth, window.innerHeight);
 		});
 
-		switch (this.animation) {
+		switch (this.options.animation) {
 			case Animation.SPIN:
 				this.spinAnimation();
 				break;
@@ -152,10 +151,11 @@ export default class ScreenSaver3DText {
 	}
 
 	createTextMesh() {
+		const sizeFactor = this.text.length / 20;
 		const textGeo = new TextGeometry(this.text, {
 			font: this.font!,
-			size: 20,
-			height: 20,
+			size: 20 - 10 * sizeFactor,
+			height: 20 - 10 * sizeFactor,
 		});
 
 		// center the rotation point in the center of the geometry
@@ -364,3 +364,5 @@ export default class ScreenSaver3DText {
 		requestAnimationFrame(this.render.bind(this));
 	}
 }
+
+export { timeText } from "./utils";

@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"clean": "rm -f build/*.min.js",
-		"start": "npm run clean && concurrently 'npx rollup --c --watch' 'http-server build/'",
+		"start": "npm run clean && concurrently 'npx rollup --c --watch' 'http-server build/ --port=3000'",
 		"build": "npx rollup --c"
 	},
 	"author": "",
