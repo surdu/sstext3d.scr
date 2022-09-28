@@ -4,6 +4,7 @@ import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { FontLoader, Font } from "three/examples/jsm/loaders/FontLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { degreesToRadians, random } from "./utils";
+import addStyles from "./styles";
 
 export enum Animation {
 	SPIN = "spin",
@@ -40,6 +41,7 @@ export default class ScreenSaver3DText {
 	envMap: THREE.CubeTexture;
 	font?: Font;
 	textMaterial: THREE.MeshPhysicalMaterial;
+	running = false;
 
 	boxHelper?: THREE.BoxHelper;
 
@@ -51,12 +53,7 @@ export default class ScreenSaver3DText {
 
 		this.text = this.getText();
 
-		this.direction = new THREE.Vector3(random(-1, 1), random(-1, 1), 0)
-			.normalize()
-			.multiplyScalar(this.speed);
-
-		const container = document.createElement("div");
-		document.body.appendChild(container);
+		this.direction = new THREE.Vector3();
 
 		this.camera = new THREE.PerspectiveCamera(
 			50,
@@ -117,7 +114,6 @@ export default class ScreenSaver3DText {
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
-		container.appendChild(this.renderer.domElement);
 
 		if (this.options.debug) {
 			const controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -131,6 +127,23 @@ export default class ScreenSaver3DText {
 
 			this.renderer.setSize(window.innerWidth, window.innerHeight);
 		});
+
+		addStyles();
+	}
+
+	start() {
+		const container = document.createElement("div");
+		container.setAttribute("id", "ss3dtext-wrapper");
+		container.appendChild(this.renderer.domElement);
+		container.addEventListener("mousemove", this.stop.bind(this));
+		document.body.appendChild(container);
+		document.body.classList.add("SS3dTextActive");
+
+		this.running = true;
+
+		this.textGroup.position.set(0, 0, 0);
+		this.textGroup.rotation.set(0, 0, 0);
+		this.direction = this.generateRandomDirection();
 
 		switch (this.options.animation) {
 			case Animation.SPIN:
@@ -148,6 +161,24 @@ export default class ScreenSaver3DText {
 		}
 
 		requestAnimationFrame(this.render.bind(this));
+	}
+
+	stop() {
+		this.running = false;
+		document.body.classList.remove("SS3dTextActive");
+
+		TWEEN.removeAll();
+
+		const container = document.getElementById("ss3dtext-wrapper");
+		if (container) {
+			document.body.removeChild(container);
+		}
+	}
+
+	generateRandomDirection() {
+		return new THREE.Vector3(random(-1, 1), random(-1, 1), 0)
+			.normalize()
+			.multiplyScalar(this.speed);
 	}
 
 	createTextMesh() {
@@ -361,7 +392,9 @@ export default class ScreenSaver3DText {
 		this.renderer.clear();
 		this.renderer.render(this.scene, this.camera);
 
-		requestAnimationFrame(this.render.bind(this));
+		if (this.running) {
+			requestAnimationFrame(this.render.bind(this));
+		}
 	}
 }
 

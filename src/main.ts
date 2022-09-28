@@ -1,5 +1,9 @@
 import ScreenSaver3DText, { Animation, timeText } from "./SS3dtext";
 
-new ScreenSaver3DText({
+const ss3d = new ScreenSaver3DText({
 	text: "Text",
 });
+
+document
+	.getElementById("startBtn")
+	?.addEventListener("click", ss3d.start.bind(ss3d));
