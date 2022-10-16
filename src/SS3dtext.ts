@@ -143,7 +143,9 @@ export default class ScreenSaver3DText {
 
 		this.textGroup.position.set(0, 0, 0);
 		this.textGroup.rotation.set(0, 0, 0);
-		this.direction = this.generateRandomDirection();
+		this.direction = new THREE.Vector3(random(-1, 1), random(-1, 1), 0)
+			.normalize()
+			.multiplyScalar(this.speed);
 
 		switch (this.options.animation) {
 			case Animation.SPIN:
@@ -175,12 +177,6 @@ export default class ScreenSaver3DText {
 		}
 	}
 
-	generateRandomDirection() {
-		return new THREE.Vector3(random(-1, 1), random(-1, 1), 0)
-			.normalize()
-			.multiplyScalar(this.speed);
-	}
-
 	createTextMesh() {
 		const sizeFactor = this.text.length / 20;
 		const textGeo = new TextGeometry(this.text, {
@@ -209,6 +205,10 @@ export default class ScreenSaver3DText {
 
 		if (typeof this.options.text === "string") {
 			text = this.options.text;
+
+			if (!text) {
+				text = "OpenGL";
+			}
 		} else if (typeof this.options.text === "function") {
 			text = this.options.text();
 		}

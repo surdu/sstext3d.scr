@@ -5,7 +5,8 @@
 		"removeComments": true,
 		"sourceMap": true,
 		"strict": true,
-		"moduleResolution": "node"
+		"moduleResolution": "node",
+		"lib": ["dom.iterable", "dom"]
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules"]

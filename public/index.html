@@ -7,29 +7,42 @@
 			content="width=device-width,minimum-scale=1,initial-scale=1"
 		/>
 		<title>3D Text</title>
-		<style>
-			body,
-			html {
-				margin: 0;
-				padding: 0;
-			}
-
-			#main {
-				display: flex;
-				height: 100vh;
-				width: 100vw;
-				justify-content: center;
-				align-items: center;
-			}
-
-			#main button {
-				font-size: 22px;
-			}
-		</style>
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+		/>
+		<link rel="stylesheet" href="./main.css" />
 	</head>
 	<body>
 		<div id="main">
-			<button id="startBtn">Start</button>
+			<form id="form">
+				<div class="field">
+					<label class="label">Text</label>
+					<div class="control">
+						<input
+							class="input"
+							type="text"
+							placeholder="Screensaver Text"
+							name="text"
+						/>
+					</div>
+				</div>
+
+				<div class="select">
+					<select name="animation">
+						<option value="spin">Spin</option>
+						<option value="seesaw">See-saw</option>
+						<option value="wobble">Wobble</option>
+						<option value="tumble">Tumble</option>
+					</select>
+				</div>
+
+				<div class="field is-grouped buttonWrap">
+					<div class="control">
+						<button class="button is-dark">Start</button>
+					</div>
+				</div>
+			</form>
 		</div>
 		<script src="main.min.js"></script>
 	</body>
