@@ -17,6 +17,8 @@ interface Options {
 	text: string | (() => string);
 	font: string;
 	animation: Animation;
+	rotationSpeed: number;
+
 	debug?: boolean;
 }
 
@@ -24,11 +26,12 @@ const defaultOptions: Options = {
 	text: "OpenGL",
 	font: "helvetiker_regular",
 	animation: Animation.SPIN,
+	rotationSpeed: 1,
 };
 
 export default class ScreenSaver3DText {
 	text: string;
-	speed = 1;
+	moveSpeed = 1;
 	direction: THREE.Vector3;
 	changingDirection = false;
 	camera: THREE.PerspectiveCamera;
@@ -50,6 +53,8 @@ export default class ScreenSaver3DText {
 			...defaultOptions,
 			...userOptions,
 		};
+
+		console.log("this.options.rotationSpeed:", this.options.rotationSpeed);
 
 		this.text = this.getText();
 
@@ -145,7 +150,7 @@ export default class ScreenSaver3DText {
 		this.textGroup.rotation.set(0, 0, 0);
 		this.direction = new THREE.Vector3(random(-1, 1), random(-1, 1), 0)
 			.normalize()
-			.multiplyScalar(this.speed);
+			.multiplyScalar(this.moveSpeed);
 
 		switch (this.options.animation) {
 			case Animation.SPIN:
@@ -205,16 +210,12 @@ export default class ScreenSaver3DText {
 
 		if (typeof this.options.text === "string") {
 			text = this.options.text;
-
-			if (!text) {
-				text = "OpenGL";
-			}
 		} else if (typeof this.options.text === "function") {
 			text = this.options.text();
 		}
 
 		if (!text) {
-			throw new Error("Text can;t be empty");
+			text = "OpenGL";
 		}
 
 		if (text.length > 20) {
@@ -291,7 +292,7 @@ export default class ScreenSaver3DText {
 
 	spinAnimation() {
 		new TWEEN.Tween({ y: 0 })
-			.to({ y: degreesToRadians(360) }, 7500)
+			.to({ y: degreesToRadians(360) }, 7500 * this.options.rotationSpeed)
 			.onUpdate((rotation) => {
 				this.textGroup.rotation.y = rotation.y;
 			})
@@ -301,7 +302,7 @@ export default class ScreenSaver3DText {
 
 	seesawAnimation() {
 		new TWEEN.Tween({ y: degreesToRadians(45) })
-			.to({ y: degreesToRadians(-45) }, 3000)
+			.to({ y: degreesToRadians(-45) }, 3000 * this.options.rotationSpeed)
 			.easing(TWEEN.Easing.Sinusoidal.InOut)
 			.onUpdate((rotation) => {
 				this.textGroup.rotation.y = rotation.y;
@@ -312,7 +313,7 @@ export default class ScreenSaver3DText {
 	}
 
 	wobbleAnimation() {
-		const animationDuration = 2000;
+		const animationDuration = 2000 * this.options.rotationSpeed;
 
 		new TWEEN.Tween({
 			y: degreesToRadians(45),
@@ -343,7 +344,7 @@ export default class ScreenSaver3DText {
 	}
 
 	tumbleAnimation() {
-		const animationDuration = 5000;
+		const animationDuration = 5000 * this.options.rotationSpeed;
 
 		new TWEEN.Tween({
 			y: 0,
