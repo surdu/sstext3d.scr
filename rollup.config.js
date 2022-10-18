@@ -1,5 +1,6 @@
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
+import { string } from "rollup-plugin-string";
 
 export default {
 	input: "src/main.ts",
@@ -14,5 +15,8 @@ export default {
 		resolve({
 			browser: true,
 		}),
+		string({
+      include: "**/*.md",
+    })
 	],
 };
