@@ -3,7 +3,7 @@ import * as TWEEN from "@tweenjs/tween.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { FontLoader, Font } from "three/examples/jsm/loaders/FontLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { degreesToRadians, developersText, random } from "./utils";
+import { degreesToRadians, developersText, random, volcanoText } from "./utils";
 import addStyles from "./styles";
 
 export enum Animation {
@@ -207,10 +207,15 @@ export default class ScreenSaver3DText {
 		let text: string | undefined;
 
 		if (typeof this.options.text === "string") {
-			if (this.options.text === "I love JS") {
-				text = developersText();
-			} else {
-				text = this.options.text;
+			switch (this.options.text) {
+				case "I love JS":
+					text = developersText();
+					break;
+				case "volcano":
+					text = volcanoText();
+					break;
+				default:
+					text = this.options.text;
 			}
 		} else if (typeof this.options.text === "function") {
 			text = this.options.text();
