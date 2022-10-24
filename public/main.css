@@ -4,6 +4,12 @@ html {
 	padding: 0;
 }
 
+#forkMe {
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
 #main {
 	display: flex;
 	height: 100vh;

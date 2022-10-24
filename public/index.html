@@ -1,69 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta
-			name="viewport"
-			content="width=device-width,minimum-scale=1,initial-scale=1"
-		/>
-		<title>3D Text</title>
-		<link
-			rel="stylesheet"
-			href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
-		/>
-		<link rel="stylesheet" href="./main.css" />
-	</head>
-	<body>
-		<div id="main">
-			<form id="form">
-				<div class="field">
-					<label class="label">Text</label>
-					<div class="control">
-						<input
-							class="input"
-							type="text"
-							placeholder="Screensaver Text"
-							name="text"
-							maxlength="20"
-						/>
-					</div>
-				</div>
 
-				<div class="field">
-					<label class="label">Animation</label>
-					<div class="control">
-						<div class="select">
-							<select name="animation">
-								<option value="spin">Spin</option>
-								<option value="seesaw">See-saw</option>
-								<option value="wobble">Wobble</option>
-								<option value="tumble">Tumble</option>
-							</select>
-						</div>
-					</div>
-				</div>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1" />
+	<title>3D Text</title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+	<link rel="stylesheet" href="./main.css" />
+</head>
 
-				<div class="field">
-					<label class="label">Rotation Speed</label>
-					<div class="control">
-						<input
-							type="range"
-							id="volume"
-							name="speed"
-							min="0"
-							max="1"
-							step="0.1"
-						/>
-					</div>
-				</div>
+<body>
+	<a href="https://github.com/surdu/sstext3d.scr" id="forkMe">
+		<img loading="lazy" width="149" height="149"
+			src="https://github.blog/wp-content/uploads/2008/12/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" />
+	</a>
 
-				<div class="field is-grouped buttonWrap">
-					<div class="control">
-						<button class="button is-dark">Start</button>
+	<div id="main">
+		<form id="form">
+			<div class="field">
+				<label class="label">Text</label>
+				<div class="control">
+					<input class="input" type="text" placeholder="Screensaver Text" name="text" maxlength="20" />
+				</div>
+			</div>
+
+			<div class="field">
+				<label class="label">Animation</label>
+				<div class="control">
+					<div class="select">
+						<select name="animation">
+							<option value="spin">Spin</option>
+							<option value="seesaw">See-saw</option>
+							<option value="wobble">Wobble</option>
+							<option value="tumble">Tumble</option>
+						</select>
 					</div>
 				</div>
-			</form>
-		</div>
-		<script src="main.min.js"></script>
-	</body>
+			</div>
+
+			<div class="field">
+				<label class="label">Rotation Speed</label>
+				<div class="control">
+					<input type="range" id="volume" name="speed" min="0" max="1" step="0.1" />
+				</div>
+			</div>
+
+			<div class="field is-grouped buttonWrap">
+				<div class="control">
+					<button class="button is-dark">Start</button>
+				</div>
+			</div>
+		</form>
+	</div>
+	<script src="main.min.js"></script>
+</body>
+
 </html>
