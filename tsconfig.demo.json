@@ -6,9 +6,8 @@
 		"sourceMap": true,
 		"strict": true,
 		"moduleResolution": "node",
-		"declaration": true,
-		"outDir": "dist",
+		"lib": ["dom.iterable", "dom"],
 	},
 	"include": ["src/**/*"],
-	"exclude": ["node_modules", "src/demo"]
+	"exclude": ["node_modules"]
 }

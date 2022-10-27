@@ -19,3 +19,4 @@ npm-debug.log*
 
 # custom
 /public/*.min.js
+dist

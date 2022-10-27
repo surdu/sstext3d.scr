@@ -1,4 +1,4 @@
-import ScreenSaver3DText, { Animation, timeText } from "./SS3dtext";
+import ScreenSaver3DText, { Animation } from "..";
 
 document.getElementById("form")?.addEventListener("submit", (event) => {
 	event.preventDefault();

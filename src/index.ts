@@ -3,8 +3,16 @@ import * as TWEEN from "@tweenjs/tween.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { FontLoader, Font } from "three/examples/jsm/loaders/FontLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { degreesToRadians, developersText, random, volcanoText } from "./utils";
+import { degreesToRadians, random } from "./utils";
 import addStyles from "./styles";
+import { developersText, volcanoText } from "./textFunctions";
+import posx from "../assets/textures/posx.png";
+import negx from "../assets/textures/negx.png";
+import posy from "../assets/textures/posy.png";
+import negy from "../assets/textures/negy.png";
+import posz from "../assets/textures/posz.png";
+import negz from "../assets/textures/negz.png";
+import fontObject from "../assets/fonts/helvetiker_regular.typeface.json";
 
 export enum Animation {
 	SPIN = "spin",
@@ -15,7 +23,6 @@ export enum Animation {
 
 interface Options {
 	text: string | (() => string);
-	font: string;
 	animation: Animation;
 	rotationSpeed: number;
 
@@ -24,7 +31,6 @@ interface Options {
 
 const defaultOptions: Options = {
 	text: "OpenGL",
-	font: "helvetiker_regular",
 	animation: Animation.SPIN,
 	rotationSpeed: 1,
 };
@@ -79,15 +85,7 @@ export default class ScreenSaver3DText {
 		this.scene.add(dirLight);
 
 		const textureLoader = new THREE.CubeTextureLoader();
-		textureLoader.setPath("textures/");
-		this.envMap = textureLoader.load([
-			"posx.png",
-			"negx.png",
-			"posy.png",
-			"negy.png",
-			"posz.png",
-			"negz.png",
-		]);
+		this.envMap = textureLoader.load([posx, negx, posy, negy, posz, negz]);
 		this.envMap.encoding = THREE.sRGBEncoding;
 
 		this.textMaterial = new THREE.MeshPhysicalMaterial({
@@ -104,15 +102,13 @@ export default class ScreenSaver3DText {
 		this.scene.add(this.textGroup);
 
 		const loader = new FontLoader();
-		loader.load(`fonts/${this.options.font}.typeface.json`, (font) => {
-			this.font = font;
-			this.createTextMesh();
+		this.font = loader.parse(fontObject);
+		this.createTextMesh();
 
-			this.boxHelper = new THREE.BoxHelper(this.textGroup, 0xffffff);
-			if (this.options.debug) {
-				this.scene.add(this.boxHelper);
-			}
-		});
+		this.boxHelper = new THREE.BoxHelper(this.textGroup, 0xffffff);
+		if (this.options.debug) {
+			this.scene.add(this.boxHelper);
+		}
 
 		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -405,5 +401,3 @@ export default class ScreenSaver3DText {
 		}
 	}
 }
-
-export { timeText } from "./utils";
