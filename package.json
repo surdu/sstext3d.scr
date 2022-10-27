@@ -6,8 +6,9 @@
 	"scripts": {
 		"clean": "rm -f public/*.min.js && rm -rf dist/",
 		"start": "npm run clean && concurrently 'npx rollup --c --demo --watch' 'http-server public/ --port=3000'",
-		"dev": "npm run clean && npx rollup --c --watch",
-		"build": "npm run clean && npx rollup --c"
+		"build": "npm run clean && npx rollup --c",
+		"build:dev": "npm run clean && npx rollup --c --watch",
+		"build:demo": "npx rollup --c --demo"
 	},
 	"author": "",
 	"license": "ISC",
